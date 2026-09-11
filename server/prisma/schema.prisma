@@ -1,0 +1,59 @@
+// Base de datos local del complemento. EposNow sigue siendo la fuente de
+// verdad para citas y empleados; aqui solo guardamos lo que EposNow no
+// gestiona: lista de espera, horarios extra y el historial de mensajes
+// de WhatsApp (para no reenviar recordatorios duplicados).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model WaitlistEntry {
+  id                String    @id @default(cuid())
+  customerName      String
+  phoneNumber       String
+  serviceName       String
+  preferredEmployeeId String?
+  preferredEmployeeName String?
+  earliestDate      DateTime
+  latestDate        DateTime
+  status            String    @default("waiting") // waiting | notified | booked | expired | cancelled
+  notifiedAt        DateTime?
+  eposnowBookingId  String?   // se rellena si la entrada termina convertida en cita
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model EmployeeSchedule {
+  id            String   @id @default(cuid())
+  eposnowStaffId String  @unique
+  displayName   String
+  colorHex      String   @default("#6C63FF")
+  workingHours  String   // JSON serializado: { mon: [["09:00","14:00"],["16:00","20:00"]], ... }
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ReminderLog {
+  id               String   @id @default(cuid())
+  eposnowBookingId String
+  reminderType     String   // "24h" | "2h"
+  sentAt           DateTime @default(now())
+
+  @@unique([eposnowBookingId, reminderType])
+}
+
+model WhatsappMessageLog {
+  id          String   @id @default(cuid())
+  toPhone     String
+  templateName String
+  payload     String   // JSON serializado enviado a la API de WhatsApp
+  status      String   // sent | failed
+  errorMessage String?
+  createdAt   DateTime @default(now())
+}
