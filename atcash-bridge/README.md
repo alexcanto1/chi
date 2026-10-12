@@ -36,6 +36,16 @@ Descarga este programa directamente desde tu repositorio:
 curl -o server.js https://raw.githubusercontent.com/alexcanto1/chi/claude/eposnow-software-development-ia8gzh/atcash-bridge/server.js
 ```
 
+Genera un certificado propio para el puente (hace falta: la app es
+HTTPS, y el navegador bloquea como "contenido mixto" cualquier cosa
+que no sea HTTPS, aunque sea `127.0.0.1`). Solo hay que hacer esto
+una vez:
+
+```
+pkg install openssl-tool -y
+openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 3650 -nodes -subj "/CN=127.0.0.1"
+```
+
 ## 3. Arrancar el puente
 
 Cada día, antes de abrir la barbería, abre Termux y escribe:
@@ -50,9 +60,13 @@ los mismos que pusiste en Ajustes de la app).
 Deberías ver:
 
 ```
-Puente ATCASH escuchando en http://0.0.0.0:8787
+Puente ATCASH escuchando en https://0.0.0.0:8787
 Reenviando peticiones a https://192.168.1.10:44333
 ```
+
+Si en vez de `https://` ves `http://` en esa primera línea, es que no
+encontró `key.pem`/`cert.pem` en la carpeta — revisa el paso del
+certificado más arriba antes de seguir.
 
 **Deja Termux abierto** (puedes minimizarlo, no lo cierres ni lo
 "deslices para cerrar") mientras uses la caja. Si Android lo mata en
@@ -70,15 +84,22 @@ En **Chico Malo Teams → Caja → Ajustes**:
 
 - **IP**: `127.0.0.1`
 - **Puerto**: `8787`
-- **Usar HTTPS**: desmarcado (el puente usa HTTP normal; es seguro
-  porque solo escucha en la propia tablet)
+- **Usar HTTPS**: **marcado** (el puente ahora también usa su propio
+  certificado, igual que el cajón)
 - **Usuario** / **Contraseña**: los mismos del cajón que ya tenías
   (`dependiente` / `1234`, o los que te dieron)
 - Desmarca "Modo simulación" si no lo estaba ya
-- Pulsa **Guardar** y luego **Probar conexión**
 
-Si todo va bien, verás "Conexión correcta. Efectivo total: X €" — y
-esta vez sí estará hablando con el cajón de verdad.
+**Antes de "Probar conexión"**, acepta el certificado del puente igual
+que hiciste con el del cajón: pulsa el botón "Comprobar el cajón en
+una pestaña nueva" (ahora apunta al puente), sal del aviso de
+seguridad con "Avanzado → Acceder a 127.0.0.1 (no seguro)", y confirma
+que aparece `{"status":"ok"}`. Solo hace falta la primera vez en cada
+tablet.
+
+Vuelve a la app, pulsa **Guardar** y luego **Probar conexión**. Si
+todo va bien, verás "Conexión correcta. Efectivo total: X €" — y esta
+vez sí estará hablando con el cajón de verdad.
 
 ## Notas
 
